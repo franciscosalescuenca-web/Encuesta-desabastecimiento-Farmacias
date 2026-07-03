@@ -11,7 +11,7 @@
     .step { display: none; }
     .step.active { display: block; }
     button { background: #357337; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 15px; font-size: 16px; font-weight: bold; }
-    input, select { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+    input, select, textarea { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
     .campo-busqueda { position: relative; }
     #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
     .item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
@@ -47,14 +47,16 @@
         <option value="Otra farmacia">Contacté por otros medios con otra farmacia</option>
         <option value="Indicar buscar">Indiqué al paciente que buscara en otras farmacias</option>
         <option value="Derivar médico">Derivé al médico</option>
-        <option value="Otras">Otras</option>
+        <option value="Otras">Otras (especificar abajo)</option>
     </select>
     
+    <textarea id="otras-info" placeholder="Especifique la acción realizada..." style="display:none;"></textarea>
+
     <div id="div-conseguido">
         <h3>¿Consiguió el paciente el medicamento?</h3>
-        <button onclick="finalizar(document.getElementById('accion').value, 'Sí')">Sí</button>
-        <button onclick="finalizar(document.getElementById('accion').value, 'No')">No</button>
-        <button onclick="finalizar(document.getElementById('accion').value, 'No lo sé')">No lo sé</button>
+        <button onclick="finalizar(obtenerAccion(), 'Sí')">Sí</button>
+        <button onclick="finalizar(obtenerAccion(), 'No')">No</button>
+        <button onclick="finalizar(obtenerAccion(), 'No lo sé')">No lo sé</button>
     </div>
     <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivar médico', '')">Finalizar</button>
   </div>
@@ -97,6 +99,10 @@
     const accion = document.getElementById('accion').value;
     const divCons = document.getElementById('div-conseguido');
     const btnFin = document.getElementById('btn-finalizar');
+    const txtOtras = document.getElementById('otras-info');
+    
+    txtOtras.style.display = (accion === 'Otras') ? 'block' : 'none';
+    
     if (accion === 'Derivar médico') {
         divCons.style.display = 'none';
         btnFin.style.display = 'block';
@@ -104,6 +110,11 @@
         divCons.style.display = 'block';
         btnFin.style.display = 'none';
     }
+  }
+
+  function obtenerAccion() {
+    const val = document.getElementById('accion').value;
+    return val === 'Otras' ? 'Otras: ' + document.getElementById('otras-info').value : val;
   }
 
   function finalizar(accion, conseguido) {
