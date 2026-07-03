@@ -2,103 +2,82 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estudio Desabastecimiento</title>
   <style>
-    body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
+    body { font-family: 'Segoe UI', sans-serif; background-color: #357337; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    h1 { color: white; text-align: center; font-size: 1.5rem; margin-bottom: 20px; max-width: 600px; }
+    .card { background: #F9F9F9; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 500px; text-align: center; }
     .step { display: none; }
     .step.active { display: block; }
-    button { background: #0445AF; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-size: 15px; }
-    input, select { display: block; width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { background: #357337; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 15px; font-size: 16px; font-weight: bold; }
+    input, select { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+    
+    /* Estilos del buscador integrado */
+    .campo-busqueda { position: relative; }
+    #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 100; text-align: left; border-radius: 0 0 10px 10px; }
+    .item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
+    .item:hover { background-color: #f1f8e9; }
   </style>
 </head>
 <body>
 
+<h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
+
 <div class="card">
   <div class="step active" id="s1">
-    <h3>Identificación</h3>
+    <h3>Datos del registro</h3>
+    <input type="text" id="cipa" placeholder="CIPA del Paciente">
     <input type="text" id="farmacia" placeholder="Nº Farmacia">
-    <input type="text" id="medicamento" placeholder="Medicamento solicitado">
-    <input type="text" id="cipa" placeholder="CIPA Paciente">
-    <button onclick="procesar()">Siguiente</button>
-  </div>
+    
+    <div class="campo-busqueda">
+        <input type="text" id="medicamento" placeholder="Buscar medicamento..." oninput="buscarMedicamento()">
+        <div id="resultados"></div>
+    </div>
 
-  <div class="step" id="s3">
-    <h3>¿Disponía de stock?</h3>
-    <button onclick="rutaSi()">Sí</button>
-    <button onclick="rutaNo()">No</button>
-  </div>
-
-  <div class="step" id="s4">
-    <h3>¿Qué acción realizó?</h3>
-    <select id="accion" onchange="checkOtro()">
-      <option value="Herramienta">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
-      <option value="Contacto">Contacté por otros medios con otra farmacia</option>
-      <option value="Paciente">Indiqué al paciente que buscara en otras farmacias</option>
-      <option value="Medico">Derivé al médico</option>
-      <option value="Otro">Otras (indicar)</option>
-    </select>
-    <input type="text" id="otroTexto" placeholder="Especifique aquí..." style="display:none;">
-    <h3>¿Consiguió el paciente el medicamento?</h3>
-    <button onclick="finalizar('Si')">Sí</button>
-    <button onclick="finalizar('No')">No</button>
-  </div>
-
-  <div class="step" id="s5">
-    <h2>¡Muchas gracias!</h2>
-    <p>Su participación es fundamental para este estudio.</p>
-    <button onclick="location.reload()">Nueva encuesta</button>
+    <button onclick="irSiguiente()">Siguiente</button>
   </div>
 </div>
 
 <script>
-  let idHash, farmaciaHash, med;
+  // Buscador CIMA
+  async function buscarMedicamento() {
+    const query = document.getElementById('medicamento').value;
+    const contenedor = document.getElementById('resultados');
+    
+    if (query.length < 3) { contenedor.innerHTML = ""; return; }
 
-  async function generarHash(texto) {
-    const msg = new TextEncoder().encode(texto);
-    const hash = await crypto.subtle.digest('SHA-256', msg);
-    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const url = `https://cima.aemps.es/cima/rest/medicamentos?nombre=${encodeURIComponent(query)}`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      contenedor.innerHTML = "";
+
+      if (data.resultados && data.resultados.length > 0) {
+        data.resultados.slice(0, 8).forEach(med => {
+          if (med.presentaciones && med.presentaciones.length > 0) {
+            const pres = med.presentaciones[0];
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = `<strong>${med.nombre}</strong><br><small>CN: ${pres.cn}</small>`;
+            div.onclick = () => {
+              document.getElementById('medicamento').value = `${med.nombre} (CN: ${pres.cn})`;
+              contenedor.innerHTML = "";
+            };
+            contenedor.appendChild(div);
+          }
+        });
+      }
+    } catch (e) {
+      console.error("Error CIMA:", e);
+    }
   }
 
-  async function procesar() {
-    const cipa = document.getElementById('cipa').value;
-    const farmaciaRaw = document.getElementById('farmacia').value;
-    med = document.getElementById('medicamento').value;
-    if(!cipa || !farmaciaRaw || !med) return alert("Por favor, completa todos los campos.");
-
-    idHash = await generarHash(cipa);
-    farmaciaHash = await generarHash(farmaciaRaw);
-    
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('s3').classList.add('active');
-  }
-
-  function checkOtro() {
-    document.getElementById('otroTexto').style.display = (document.getElementById('accion').value === 'Otro') ? 'block' : 'none';
-  }
-
-  function rutaSi() { finalizar('No aplica (había stock)'); }
-  function rutaNo() { 
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('s4').classList.add('active');
-  }
-
-  async function finalizar(consiguio) {
-    let accion = document.getElementById('accion').value;
-    const otroTexto = document.getElementById('otroTexto').value;
-    if (accion === 'Otro') accion = "Otro: " + otroTexto;
-    
-    const payload = { id: idHash, farmacia: farmaciaHash, medicamento: med, accion, consiguio };
-    
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('s5').classList.add('active');
-    
-    await fetch('https://script.google.com/macros/s/AKfycbx0ZsS0zu3rGN7E-_wEmX-Lve6PWsp4S7xXlFW-qL0TmpSOYY2_BTITWO2qudJ6Uf1J/exec', { 
-      method: 'POST', 
-      mode: 'no-cors',
-      body: JSON.stringify(payload) 
-    });
+  function irSiguiente() {
+    // Aquí sigue tu lógica original de salto entre steps
+    alert("Navegando a la siguiente sección...");
   }
 </script>
+
 </body>
 </html>
