@@ -5,77 +5,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estudio Desabastecimiento</title>
   <style>
+    /* Estilos basados en tu estructura original */
     body { font-family: 'Segoe UI', sans-serif; background-color: #357337; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-    h1 { color: white; text-align: center; font-size: 1.5rem; margin-bottom: 20px; max-width: 600px; }
     .card { background: #F9F9F9; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 500px; text-align: center; }
     .step { display: none; }
     .step.active { display: block; }
     button { background: #357337; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 15px; font-size: 16px; font-weight: bold; }
-    input, select { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+    input, select { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
     
-    /* Estilos del buscador integrado */
+    /* Buscador visualmente integrado */
     .campo-busqueda { position: relative; }
-    #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 100; text-align: left; border-radius: 0 0 10px 10px; }
-    .item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
+    #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
+    .item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
     .item:hover { background-color: #f1f8e9; }
   </style>
 </head>
 <body>
 
-<h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
+<h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos</h1>
 
 <div class="card">
   <div class="step active" id="s1">
     <h3>Datos del registro</h3>
-    <input type="text" id="cipa" placeholder="CIPA del Paciente">
     <input type="text" id="farmacia" placeholder="Nº Farmacia">
-    
     <div class="campo-busqueda">
-        <input type="text" id="medicamento" placeholder="Buscar medicamento..." oninput="buscarMedicamento()">
+        <input type="text" id="medicamento" placeholder="Medicamento solicitado (escriba para buscar)" oninput="buscar()">
         <div id="resultados"></div>
     </div>
-
+    <input type="text" id="cipa" placeholder="CIPA del Paciente">
     <button onclick="irSiguiente()">Siguiente</button>
+  </div>
+
+  <div class="step" id="s2">
+    <h3>¿Disponía de stock?</h3>
+    <button onclick="irPaso3('Sí')">Sí</button>
+    <button onclick="irPaso3('No')">No</button>
+  </div>
+
+  <div class="step" id="s3">
+    <h3>¿Qué acción realizó?</h3>
+    <select id="accion">
+        <option value="farmahelp">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
+        <option value="otros">Contacté por otros medios con otra farmacia</option>
+        <option value="indique">Indiqué al paciente que buscara en otras farmacias</option>
+        <option value="medico">Derivé al médico</option>
+        <option value="otras">Otras (indicar)</option>
+    </select>
+    <h3>¿Consiguió el paciente el medicamento?</h3>
+    <button onclick="finalizar('Sí')">Sí</button>
+    <button onclick="finalizar('No')">No</button>
   </div>
 </div>
 
 <script>
-  // Buscador CIMA
-  async function buscarMedicamento() {
+  // BUSCADOR CIMA (Sin códigos nacionales, solo nombres)
+  async function buscar() {
     const query = document.getElementById('medicamento').value;
-    const contenedor = document.getElementById('resultados');
-    
-    if (query.length < 3) { contenedor.innerHTML = ""; return; }
+    const res = document.getElementById('resultados');
+    if (query.length < 3) { res.innerHTML = ""; return; }
 
-    const url = `https://cima.aemps.es/cima/rest/medicamentos?nombre=${encodeURIComponent(query)}`;
     try {
-      const response = await fetch(url);
+      const response = await fetch(`https://cima.aemps.es/cima/rest/medicamentos?nombre=${encodeURIComponent(query)}`);
       const data = await response.json();
-      contenedor.innerHTML = "";
-
-      if (data.resultados && data.resultados.length > 0) {
-        data.resultados.slice(0, 8).forEach(med => {
-          if (med.presentaciones && med.presentaciones.length > 0) {
-            const pres = med.presentaciones[0];
-            const div = document.createElement("div");
-            div.className = "item";
-            div.innerHTML = `<strong>${med.nombre}</strong><br><small>CN: ${pres.cn}</small>`;
-            div.onclick = () => {
-              document.getElementById('medicamento').value = `${med.nombre} (CN: ${pres.cn})`;
-              contenedor.innerHTML = "";
-            };
-            contenedor.appendChild(div);
-          }
+      res.innerHTML = "";
+      
+      if (data.resultados) {
+        data.resultados.slice(0, 8).forEach(m => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.textContent = m.nombre;
+          div.onclick = () => {
+            document.getElementById('medicamento').value = m.nombre;
+            res.innerHTML = "";
+          };
+          res.appendChild(div);
         });
       }
-    } catch (e) {
-      console.error("Error CIMA:", e);
-    }
+    } catch (e) { console.error("Error buscando en CIMA"); }
   }
 
+  // NAVEGACIÓN (Lógica que pediste)
   function irSiguiente() {
-    // Aquí sigue tu lógica original de salto entre steps
-    alert("Navegando a la siguiente sección...");
+    document.getElementById('s1').classList.remove('active');
+    document.getElementById('s2').classList.add('active');
+  }
+
+  function irPaso3(respuesta) {
+    document.getElementById('s2').classList.remove('active');
+    document.getElementById('s3').classList.add('active');
+  }
+
+  function finalizar(respuesta) {
+    alert("Encuesta finalizada con éxito.");
   }
 </script>
 
