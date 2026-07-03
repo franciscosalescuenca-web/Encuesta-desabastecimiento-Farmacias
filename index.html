@@ -20,7 +20,7 @@
 </head>
 <body>
 
-<h1>Encuesta para Oficinas de Farmacia</h1>
+<h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
 
 <div class="card">
   <div class="step active" id="s1">
@@ -36,22 +36,27 @@
 
   <div class="step" id="s2">
     <h3>¿Disponía de stock?</h3>
-    <button onclick="irPaso3('Sí')">Sí</button>
-    <button onclick="irPaso3('No')">No</button>
+    <button onclick="finalizar('N/A', 'N/A')">Sí</button>
+    <button onclick="mostrarAcciones()">No</button>
   </div>
 
   <div class="step" id="s3">
     <h3>¿Qué acción realizó?</h3>
-    <select id="accion">
+    <select id="accion" onchange="checkAccion()">
         <option value="Farmahelp/Luda">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
         <option value="Otra farmacia">Contacté por otros medios con otra farmacia</option>
         <option value="Indicar buscar">Indiqué al paciente que buscara en otras farmacias</option>
         <option value="Derivar médico">Derivé al médico</option>
         <option value="Otras">Otras</option>
     </select>
-    <h3>¿Consiguió el paciente el medicamento?</h3>
-    <button onclick="finalizar('Sí')">Sí, se consiguió</button>
-    <button onclick="finalizar('No')">No, desabastecimiento</button>
+    
+    <div id="div-conseguido">
+        <h3>¿Consiguió el paciente el medicamento?</h3>
+        <button onclick="finalizar(document.getElementById('accion').value, 'Sí')">Sí</button>
+        <button onclick="finalizar(document.getElementById('accion').value, 'No')">No</button>
+        <button onclick="finalizar(document.getElementById('accion').value, 'No lo sé')">No lo sé</button>
+    </div>
+    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivar médico', '')">Finalizar</button>
   </div>
 </div>
 
@@ -83,30 +88,40 @@
     document.getElementById('s2').classList.add('active');
   }
 
-  function irPaso3(stock) {
-    window.stockTemporal = stock;
+  function mostrarAcciones() {
     document.getElementById('s2').classList.remove('active');
     document.getElementById('s3').classList.add('active');
   }
 
-  function finalizar(conseguido) {
+  function checkAccion() {
+    const accion = document.getElementById('accion').value;
+    const divCons = document.getElementById('div-conseguido');
+    const btnFin = document.getElementById('btn-finalizar');
+    if (accion === 'Derivar médico') {
+        divCons.style.display = 'none';
+        btnFin.style.display = 'block';
+    } else {
+        divCons.style.display = 'block';
+        btnFin.style.display = 'none';
+    }
+  }
+
+  function finalizar(accion, conseguido) {
     const datos = {
       id: "ID-" + Date.now(),
       farmacia: document.getElementById("farmacia").value,
       medicamento: document.getElementById("medicamento").value,
       cipa: document.getElementById("cipa").value,
-      stock: window.stockTemporal,
-      accion: document.getElementById("accion").value,
+      accion: accion,
       consiguió: conseguido
     };
 
     fetch(urlGoogle, {
-      method: "POST",
-      mode: "no-cors",
+      method: "POST", mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
     }).then(() => {
-      alert("¡Datos enviados con éxito!");
+      alert("¡Gracias, datos enviados!");
       location.reload();
     });
   }
