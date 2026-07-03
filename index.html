@@ -5,15 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estudio Desabastecimiento</title>
   <style>
-    /* Estilos basados en tu estructura original */
     body { font-family: 'Segoe UI', sans-serif; background-color: #357337; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    h1 { color: white; text-align: center; font-size: 1.5rem; margin-bottom: 20px; max-width: 600px; }
     .card { background: #F9F9F9; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 500px; text-align: center; }
     .step { display: none; }
     .step.active { display: block; }
     button { background: #357337; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 15px; font-size: 16px; font-weight: bold; }
     input, select { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-    
-    /* Buscador visualmente integrado */
     .campo-busqueda { position: relative; }
     #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
     .item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
@@ -22,14 +20,14 @@
 </head>
 <body>
 
-<h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos</h1>
+<h1>Encuesta para Oficinas de Farmacia</h1>
 
 <div class="card">
   <div class="step active" id="s1">
     <h3>Datos del registro</h3>
     <input type="text" id="farmacia" placeholder="Nº Farmacia">
     <div class="campo-busqueda">
-        <input type="text" id="medicamento" placeholder="Medicamento solicitado (escriba para buscar)" oninput="buscar()">
+        <input type="text" id="medicamento" placeholder="Medicamento solicitado..." oninput="buscar()">
         <div id="resultados"></div>
     </div>
     <input type="text" id="cipa" placeholder="CIPA del Paciente">
@@ -45,60 +43,73 @@
   <div class="step" id="s3">
     <h3>¿Qué acción realizó?</h3>
     <select id="accion">
-        <option value="farmahelp">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
-        <option value="otros">Contacté por otros medios con otra farmacia</option>
-        <option value="indique">Indiqué al paciente que buscara en otras farmacias</option>
-        <option value="medico">Derivé al médico</option>
-        <option value="otras">Otras (indicar)</option>
+        <option value="Farmahelp/Luda">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
+        <option value="Otra farmacia">Contacté por otros medios con otra farmacia</option>
+        <option value="Indicar buscar">Indiqué al paciente que buscara en otras farmacias</option>
+        <option value="Derivar médico">Derivé al médico</option>
+        <option value="Otras">Otras</option>
     </select>
     <h3>¿Consiguió el paciente el medicamento?</h3>
-    <button onclick="finalizar('Sí')">Sí</button>
-    <button onclick="finalizar('No')">No</button>
+    <button onclick="finalizar('Sí')">Sí, se consiguió</button>
+    <button onclick="finalizar('No')">No, desabastecimiento</button>
   </div>
 </div>
 
 <script>
-  // BUSCADOR CIMA (Sin códigos nacionales, solo nombres)
-  async function buscar() {
-    const query = document.getElementById('medicamento').value;
-    const res = document.getElementById('resultados');
-    if (query.length < 3) { res.innerHTML = ""; return; }
+  const urlGoogle = "https://script.google.com/macros/s/AKfycbwyHBf6QQwZ-0gaXdx838jhTLCyG78FwsBke-sWtqPgChnpocHpcnz7sU_6TJmjHLWp/exec";
 
-    try {
-      const response = await fetch(`https://cima.aemps.es/cima/rest/medicamentos?nombre=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      res.innerHTML = "";
-      
-      if (data.resultados) {
-        data.resultados.slice(0, 8).forEach(m => {
-          const div = document.createElement("div");
-          div.className = "item";
-          div.textContent = m.nombre;
-          div.onclick = () => {
-            document.getElementById('medicamento').value = m.nombre;
-            res.innerHTML = "";
-          };
-          res.appendChild(div);
-        });
-      }
-    } catch (e) { console.error("Error buscando en CIMA"); }
+  function buscar() {
+    const q = document.getElementById('medicamento').value;
+    const res = document.getElementById('resultados');
+    if (q.length < 3) { res.innerHTML = ""; return; }
+    fetch('https://cima.aemps.es/cima/rest/medicamentos?nombre=' + encodeURIComponent(q))
+      .then(r => r.json())
+      .then(data => {
+        res.innerHTML = "";
+        if(data.resultados) {
+          data.resultados.slice(0, 5).forEach(m => {
+            const div = document.createElement("div");
+            div.className = "item";
+            div.textContent = m.nombre;
+            div.onclick = () => { document.getElementById('medicamento').value = m.nombre; res.innerHTML = ""; };
+            res.appendChild(div);
+          });
+        }
+      });
   }
 
-  // NAVEGACIÓN (Lógica que pediste)
   function irSiguiente() {
     document.getElementById('s1').classList.remove('active');
     document.getElementById('s2').classList.add('active');
   }
 
-  function irPaso3(respuesta) {
+  function irPaso3(stock) {
+    window.stockTemporal = stock;
     document.getElementById('s2').classList.remove('active');
     document.getElementById('s3').classList.add('active');
   }
 
-  function finalizar(respuesta) {
-    alert("Encuesta finalizada con éxito.");
+  function finalizar(conseguido) {
+    const datos = {
+      id: "ID-" + Date.now(),
+      farmacia: document.getElementById("farmacia").value,
+      medicamento: document.getElementById("medicamento").value,
+      cipa: document.getElementById("cipa").value,
+      stock: window.stockTemporal,
+      accion: document.getElementById("accion").value,
+      consiguió: conseguido
+    };
+
+    fetch(urlGoogle, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    }).then(() => {
+      alert("¡Datos enviados con éxito!");
+      location.reload();
+    });
   }
 </script>
-
 </body>
 </html>
