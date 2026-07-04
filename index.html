@@ -24,7 +24,7 @@
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
 <p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia en la Región de Murcia.</p>
-<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA, el código de Oficina de Farmacia y cualquier identificador personal se anonimizan antes de ser procesados, asegurando la privacidad en todo el proceso de estudio.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA, el código de Oficina de Farmacia y cualquier identificador personal se anonimizan antes de ser procesados.</p>
 
 <div class="card">
   <div class="step active" id="s1">
@@ -78,21 +78,28 @@
   }
 
   function buscar() {
-    const q = document.getElementById('medicamento').value;
+    const inputElement = document.getElementById('medicamento');
+    const q = inputElement.value;
     const res = document.getElementById('resultados');
     medicamentoSeleccionado = false; 
     if (q.length < 3) { res.innerHTML = ""; return; }
+    
     fetch('https://cima.aemps.es/cima/rest/medicamentos?nombre=' + encodeURIComponent(q))
       .then(r => r.json())
       .then(data => {
         res.innerHTML = "";
         if(data.resultados) {
-          data.resultados.slice(0, 5).forEach(m => {
+          // Filtro: solo medicamentos que empiezan por lo escrito
+          const filtrados = data.resultados.filter(m => 
+            m.nombre.toUpperCase().startsWith(q.toUpperCase())
+          );
+          
+          filtrados.slice(0, 5).forEach(m => {
             const div = document.createElement("div");
             div.className = "item";
             div.textContent = m.nombre;
             div.onclick = () => { 
-                document.getElementById('medicamento').value = m.nombre; 
+                inputElement.value = m.nombre; 
                 res.innerHTML = ""; 
                 medicamentoSeleccionado = true;
             };
@@ -129,10 +136,8 @@
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
     
-    // Filtro inteligente: extrae solo números
     const rawFarmacia = document.getElementById("farmacia").value;
     const farmaciaLimpia = parseInt(rawFarmacia.replace(/\D/g, ''), 10).toString();
-    
     const cipaVal = document.getElementById("cipa").value.trim();
     
     const datos = {
