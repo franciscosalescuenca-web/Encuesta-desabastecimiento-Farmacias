@@ -24,7 +24,7 @@
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
 <p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia en la Región de Murcia.</p>
-<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA y el código de Oficina de Farmacia se anonimizan antes de ser procesados, asegurando la privacidad en todo el proceso de estudio.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA, el código de Oficina de Farmacia y cualquier identificador personal se anonimizan antes de ser procesados, asegurando la privacidad en todo el proceso de estudio.</p>
 
 <div class="card">
   <div class="step active" id="s1">
@@ -67,6 +67,16 @@
 <script>
   const urlGoogle = "https://script.google.com/macros/s/AKfycbwyHBf6QQwZ-0gaXdx838jhTLCyG78FwsBke-sWtqPgChnpocHpcnz7sU_6TJmjHLWp/exec";
   let medicamentoSeleccionado = false;
+
+  // Función para anonimizar el dato (Hash simple)
+  function hashData(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+          hash = ((hash << 5) - hash) + str.charCodeAt(i);
+          hash |= 0;
+      }
+      return "F-" + Math.abs(hash).toString(16);
+  }
 
   function buscar() {
     const q = document.getElementById('medicamento').value;
@@ -120,11 +130,14 @@
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
     
+    // Aquí anonimizamos el número de farmacia antes de enviarlo
+    const farmaciaOriginal = document.getElementById("farmacia").value;
+    
     const datos = {
       id: "ID-" + Date.now(),
-      farmacia: document.getElementById("farmacia").value,
+      farmacia: hashData(farmaciaOriginal), // Se envía anonimizado
       medicamento: document.getElementById("medicamento").value,
-      cipa: document.getElementById("cipa").value,
+      cipa: "ANONIMIZADO", // El CIPA ya no se envía, se reemplaza por esta etiqueta
       accion: accion,
       consiguió: conseguido
     };
