@@ -6,11 +6,13 @@
   <title>Estudio Desabastecimiento</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background-color: #357337; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-    h1 { color: white; text-align: center; font-size: 1.5rem; margin-bottom: 20px; max-width: 600px; }
+    h1 { color: white; text-align: center; font-size: 1.4rem; margin-bottom: 10px; max-width: 600px; }
+    p { color: #f0f0f0; text-align: center; font-size: 0.95rem; max-width: 500px; margin-bottom: 15px; }
     .card { background: #F9F9F9; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 500px; text-align: center; }
     .step { display: none; }
     .step.active { display: block; }
     button { background: #357337; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 15px; font-size: 16px; font-weight: bold; }
+    button:disabled { background: #a5a5a5; cursor: not-allowed; }
     input, select, textarea { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
     .campo-busqueda { position: relative; }
     #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
@@ -21,53 +23,55 @@
 <body>
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
+<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las oficinas de farmacia en la Región de Murcia.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA y el código de farmacia se anonimizan antes de ser procesados, asegurando la privacidad en todo el proceso de estudio.</p>
 
 <div class="card">
   <div class="step active" id="s1">
     <h3>Datos del registro</h3>
     <input type="text" id="farmacia" placeholder="Nº Farmacia">
     <div class="campo-busqueda">
-        <input type="text" id="medicamento" placeholder="Medicamento solicitado..." oninput="buscar()">
+        <input type="text" id="medicamento" placeholder="Escriba y seleccione medicamento..." oninput="buscar()">
         <div id="resultados"></div>
     </div>
     <input type="text" id="cipa" placeholder="CIPA del Paciente">
-    <button onclick="irSiguiente()">Siguiente</button>
+    <button id="btn-s1" onclick="irSiguiente()">Siguiente</button>
   </div>
 
   <div class="step" id="s2">
     <h3>¿Disponía de stock?</h3>
-    <button onclick="finalizar('N/A', 'N/A')">Sí</button>
+    <button onclick="finalizar('N/A', 'Sí hay stock')">Sí</button>
     <button onclick="mostrarAcciones()">No</button>
   </div>
 
   <div class="step" id="s3">
     <h3>¿Qué acción realizó?</h3>
     <select id="accion" onchange="checkAccion()">
-        <option value="Farmahelp/Luda">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
-        <option value="Otra farmacia">Contacté por otros medios con otra farmacia</option>
-        <option value="Indicar buscar">Indiqué al paciente que buscara en otras farmacias</option>
-        <option value="Derivar médico">Derivé al médico</option>
-        <option value="Otras">Otras (especificar abajo)</option>
+        <option value="Farmahelp/Luda">Farmahelp/Luda</option>
+        <option value="Otra farmacia">Contacto directo otra farmacia</option>
+        <option value="Indicar buscar">Indicar al paciente que busque</option>
+        <option value="Derivar médico">Derivar al médico</option>
+        <option value="Otras">Otras</option>
     </select>
-    
-    <textarea id="otras-info" placeholder="Especifique la acción realizada..." style="display:none;"></textarea>
-
+    <textarea id="otras-info" placeholder="Especifique..." style="display:none;"></textarea>
     <div id="div-conseguido">
         <h3>¿Consiguió el paciente el medicamento?</h3>
         <button onclick="finalizar(obtenerAccion(), 'Sí')">Sí</button>
         <button onclick="finalizar(obtenerAccion(), 'No')">No</button>
         <button onclick="finalizar(obtenerAccion(), 'No lo sé')">No lo sé</button>
     </div>
-    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivar médico', '')">Finalizar</button>
+    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivar médico', 'N/A')">Finalizar</button>
   </div>
 </div>
 
 <script>
   const urlGoogle = "https://script.google.com/macros/s/AKfycbwyHBf6QQwZ-0gaXdx838jhTLCyG78FwsBke-sWtqPgChnpocHpcnz7sU_6TJmjHLWp/exec";
+  let medicamentoSeleccionado = false;
 
   function buscar() {
     const q = document.getElementById('medicamento').value;
     const res = document.getElementById('resultados');
+    medicamentoSeleccionado = false; 
     if (q.length < 3) { res.innerHTML = ""; return; }
     fetch('https://cima.aemps.es/cima/rest/medicamentos?nombre=' + encodeURIComponent(q))
       .then(r => r.json())
@@ -78,7 +82,11 @@
             const div = document.createElement("div");
             div.className = "item";
             div.textContent = m.nombre;
-            div.onclick = () => { document.getElementById('medicamento').value = m.nombre; res.innerHTML = ""; };
+            div.onclick = () => { 
+                document.getElementById('medicamento').value = m.nombre; 
+                res.innerHTML = ""; 
+                medicamentoSeleccionado = true;
+            };
             res.appendChild(div);
           });
         }
@@ -86,6 +94,7 @@
   }
 
   function irSiguiente() {
+    if (!medicamentoSeleccionado) { alert("Por favor, seleccione un medicamento del desplegable."); return; }
     document.getElementById('s1').classList.remove('active');
     document.getElementById('s2').classList.add('active');
   }
@@ -97,19 +106,9 @@
 
   function checkAccion() {
     const accion = document.getElementById('accion').value;
-    const divCons = document.getElementById('div-conseguido');
-    const btnFin = document.getElementById('btn-finalizar');
-    const txtOtras = document.getElementById('otras-info');
-    
-    txtOtras.style.display = (accion === 'Otras') ? 'block' : 'none';
-    
-    if (accion === 'Derivar médico') {
-        divCons.style.display = 'none';
-        btnFin.style.display = 'block';
-    } else {
-        divCons.style.display = 'block';
-        btnFin.style.display = 'none';
-    }
+    document.getElementById('otras-info').style.display = (accion === 'Otras') ? 'block' : 'none';
+    document.getElementById('div-conseguido').style.display = (accion === 'Derivar médico') ? 'none' : 'block';
+    document.getElementById('btn-finalizar').style.display = (accion === 'Derivar médico') ? 'block' : 'none';
   }
 
   function obtenerAccion() {
@@ -118,6 +117,9 @@
   }
 
   function finalizar(accion, conseguido) {
+    const botones = document.querySelectorAll('button');
+    botones.forEach(b => b.disabled = true);
+    
     const datos = {
       id: "ID-" + Date.now(),
       farmacia: document.getElementById("farmacia").value,
@@ -132,7 +134,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
     }).then(() => {
-      alert("¡Gracias, datos enviados!");
+      alert("¡Enviado correctamente!");
       location.reload();
     });
   }
