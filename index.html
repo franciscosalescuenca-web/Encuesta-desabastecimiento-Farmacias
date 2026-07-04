@@ -29,12 +29,12 @@
 <div class="card">
   <div class="step active" id="s1">
     <h3>Datos del registro</h3>
-    <input type="text" id="farmacia" placeholder="Nº Farmacia">
+    <input type="text" id="farmacia" placeholder="Nº Farmacia (Ej: 10, MU-10, 0010)" inputmode="numeric">
     <div class="campo-busqueda">
         <input type="text" id="medicamento" placeholder="Escriba y seleccione medicamento..." oninput="buscar()">
         <div id="resultados"></div>
     </div>
-    <input type="text" id="cipa" placeholder="CIPA del Paciente">
+    <input type="text" id="cipa" placeholder="Escanear CIPA del Paciente" inputmode="numeric" autofocus onkeypress="if(event.keyCode==13) irSiguiente()">
     <button id="btn-s1" onclick="irSiguiente()">Siguiente</button>
   </div>
 
@@ -129,12 +129,15 @@
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
     
+    // Filtro inteligente: extrae solo números
+    const rawFarmacia = document.getElementById("farmacia").value;
+    const farmaciaLimpia = parseInt(rawFarmacia.replace(/\D/g, ''), 10).toString();
+    
     const cipaVal = document.getElementById("cipa").value.trim();
-    const farmaciaVal = document.getElementById("farmacia").value.trim();
     
     const datos = {
       id: "PAC-" + hashString(cipaVal + "SALT-PAC"),
-      farmacia: "FAR-" + hashString(farmaciaVal + "SALT-FAR"),
+      farmacia: "FAR-" + hashString(farmaciaLimpia + "SALT-FAR"),
       medicamento: document.getElementById("medicamento").value,
       cipa: "ANONIMIZADO",
       accion: accion,
