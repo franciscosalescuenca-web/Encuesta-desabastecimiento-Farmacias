@@ -15,7 +15,7 @@
     button:disabled { background: #a5a5a5; cursor: not-allowed; }
     input, select, textarea { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
     .campo-busqueda { position: relative; }
-    #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
+    #resultados { border: 1px solid #ddd; border-top: none; max-height: 250px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
     .item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
     .item:hover { background-color: #f1f8e9; }
   </style>
@@ -23,8 +23,8 @@
 <body>
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
-<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia en la Región de Murcia.</p>
-<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA, el código de Oficina de Farmacia y cualquier identificador personal se anonimizan antes de ser procesados.</p>
+<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Datos anonimizados para uso estrictamente estadístico.</p>
 
 <div class="card">
   <div class="step active" id="s1">
@@ -34,7 +34,7 @@
         <input type="text" id="medicamento" placeholder="Escriba y seleccione medicamento..." oninput="buscar()">
         <div id="resultados"></div>
     </div>
-    <input type="text" id="cipa" placeholder="Escanear CIPA del Paciente" inputmode="numeric" autofocus onkeypress="if(event.keyCode==13) irSiguiente()">
+    <input type="text" id="cipa" placeholder="Escanear CIPA del Paciente" inputmode="numeric" onkeypress="if(event.keyCode==13) irSiguiente()">
     <button id="btn-s1" onclick="irSiguiente()">Siguiente</button>
   </div>
 
@@ -89,28 +89,29 @@
       .then(data => {
         res.innerHTML = "";
         if(data.resultados) {
-          // Filtro: solo medicamentos que empiezan por lo escrito
-          const filtrados = data.resultados.filter(m => 
-            m.nombre.toUpperCase().startsWith(q.toUpperCase())
-          );
+          const filtrados = data.resultados.filter(m => m.nombre.toUpperCase().startsWith(q.toUpperCase()));
           
           filtrados.slice(0, 5).forEach(m => {
-            const div = document.createElement("div");
-            div.className = "item";
-            div.textContent = m.nombre;
-            div.onclick = () => { 
-                inputElement.value = m.nombre; 
-                res.innerHTML = ""; 
-                medicamentoSeleccionado = true;
-            };
-            res.appendChild(div);
+            if(m.envases && m.envases.length > 0) {
+                m.envases.forEach(envase => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.textContent = m.nombre + " - " + envase.presentacion;
+                    div.onclick = () => { 
+                        inputElement.value = div.textContent; 
+                        res.innerHTML = ""; 
+                        medicamentoSeleccionado = true;
+                    };
+                    res.appendChild(div);
+                });
+            }
           });
         }
       });
   }
 
   function irSiguiente() {
-    if (!medicamentoSeleccionado) { alert("Por favor, seleccione un medicamento del desplegable."); return; }
+    if (!medicamentoSeleccionado) { alert("Por favor, seleccione una presentación del desplegable."); return; }
     document.getElementById('s1').classList.remove('active');
     document.getElementById('s2').classList.add('active');
   }
