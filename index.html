@@ -47,20 +47,20 @@
   <div class="step" id="s3">
     <h3>¿Qué acción realizó?</h3>
     <select id="accion" onchange="checkAccion()">
-        <option value="Farmahelp/Luda">Farmahelp/Luda</option>
-        <option value="Contacto directo otra farmacia">Contacto directo otra farmacia</option>
-        <option value="Indicar al paciente que busque">Indicar al paciente que busque</option>
-        <option value="Derivar al médico">Derivar al médico</option>
+        <option value="Utilicé herramientas especializadas (Farmahelp, Luda, etc.)">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
+        <option value="Contacté por otros medios con otra farmacia">Contacté por otros medios con otra farmacia</option>
+        <option value="Indiqué al paciente que buscara en otras farmacias">Indiqué al paciente que buscara en otras farmacias</option>
+        <option value="Derivé al médico">Derivé al médico</option>
         <option value="Otras">Otras</option>
     </select>
-    <textarea id="otras-info" placeholder="Especifique..." style="display:none;"></textarea>
+    <textarea id="otras-info" placeholder="Especifique la acción realizada..." style="display:none;"></textarea>
     <div id="div-conseguido">
         <h3>¿Consiguió el paciente el medicamento?</h3>
         <button onclick="finalizar(obtenerAccion(), 'Sí')">Sí</button>
         <button onclick="finalizar(obtenerAccion(), 'No')">No</button>
         <button onclick="finalizar(obtenerAccion(), 'No lo sé')">No lo sé</button>
     </div>
-    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivar al médico', 'N/A')">Finalizar</button>
+    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivé al médico', 'N/A')">Finalizar</button>
   </div>
 </div>
 
@@ -107,8 +107,8 @@
   function checkAccion() {
     const accion = document.getElementById('accion').value;
     document.getElementById('otras-info').style.display = (accion === 'Otras') ? 'block' : 'none';
-    document.getElementById('div-conseguido').style.display = (accion === 'Derivar al médico') ? 'none' : 'block';
-    document.getElementById('btn-finalizar').style.display = (accion === 'Derivar al médico') ? 'block' : 'none';
+    document.getElementById('div-conseguido').style.display = (accion === 'Derivé al médico') ? 'none' : 'block';
+    document.getElementById('btn-finalizar').style.display = (accion === 'Derivé al médico') ? 'block' : 'none';
   }
 
   function obtenerAccion() {
