@@ -24,7 +24,7 @@
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
 <p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las oficinas de farmacia en la Región de Murcia.</p>
-<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA y el código de farmacia se anonimizan antes de ser procesados, asegurando la privacidad en todo el proceso de estudio.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA y el código de Oficina de Farmacia se anonimizan antes de ser procesados, asegurando la privacidad en todo el proceso de estudio.</p>
 
 <div class="card">
   <div class="step active" id="s1">
@@ -48,9 +48,9 @@
     <h3>¿Qué acción realizó?</h3>
     <select id="accion" onchange="checkAccion()">
         <option value="Farmahelp/Luda">Farmahelp/Luda</option>
-        <option value="Otra farmacia">Contacto directo otra farmacia</option>
-        <option value="Indicar buscar">Indicar al paciente que busque</option>
-        <option value="Derivar médico">Derivar al médico</option>
+        <option value="Contacto directo otra farmacia">Contacto directo otra farmacia</option>
+        <option value="Indicar al paciente que busque">Indicar al paciente que busque</option>
+        <option value="Derivar al médico">Derivar al médico</option>
         <option value="Otras">Otras</option>
     </select>
     <textarea id="otras-info" placeholder="Especifique..." style="display:none;"></textarea>
@@ -60,7 +60,7 @@
         <button onclick="finalizar(obtenerAccion(), 'No')">No</button>
         <button onclick="finalizar(obtenerAccion(), 'No lo sé')">No lo sé</button>
     </div>
-    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivar médico', 'N/A')">Finalizar</button>
+    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivar al médico', 'N/A')">Finalizar</button>
   </div>
 </div>
 
@@ -107,8 +107,8 @@
   function checkAccion() {
     const accion = document.getElementById('accion').value;
     document.getElementById('otras-info').style.display = (accion === 'Otras') ? 'block' : 'none';
-    document.getElementById('div-conseguido').style.display = (accion === 'Derivar médico') ? 'none' : 'block';
-    document.getElementById('btn-finalizar').style.display = (accion === 'Derivar médico') ? 'block' : 'none';
+    document.getElementById('div-conseguido').style.display = (accion === 'Derivar al médico') ? 'none' : 'block';
+    document.getElementById('btn-finalizar').style.display = (accion === 'Derivar al médico') ? 'block' : 'none';
   }
 
   function obtenerAccion() {
