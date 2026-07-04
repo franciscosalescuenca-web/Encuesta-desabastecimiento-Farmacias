@@ -23,8 +23,8 @@
 <body>
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
-<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento.</p>
-<p style="font-size: 0.8rem; opacity: 0.9;">*Datos anonimizados para uso estrictamente estadístico.</p>
+<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia en la Región de Murcia.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA, el código de Oficina de Farmacia y cualquier identificador personal se anonimizan antes de ser procesados.</p>
 
 <div class="card">
   <div class="step active" id="s1">
@@ -34,7 +34,7 @@
         <input type="text" id="medicamento" placeholder="Escriba y seleccione medicamento..." oninput="buscar()">
         <div id="resultados"></div>
     </div>
-    <input type="text" id="cipa" placeholder="Escanear CIPA del Paciente" inputmode="numeric" onkeypress="if(event.keyCode==13) irSiguiente()">
+    <input type="text" id="cipa" placeholder="Escanear CIPA del Paciente" inputmode="numeric" autofocus onkeypress="if(event.keyCode==13) irSiguiente()">
     <button id="btn-s1" onclick="irSiguiente()">Siguiente</button>
   </div>
 
@@ -47,7 +47,7 @@
   <div class="step" id="s3">
     <h3>¿Qué acción realizó?</h3>
     <select id="accion" onchange="checkAccion()">
-        <option value="Utilicé herramientas especializadas">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
+        <option value="Utilicé herramientas especializadas (Farmahelp, Luda, etc.)">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
         <option value="Contacté por otros medios con otra farmacia">Contacté por otros medios con otra farmacia</option>
         <option value="Indiqué al paciente que buscara en otras farmacias">Indiqué al paciente que buscara en otras farmacias</option>
         <option value="Derivé al médico">Derivé al médico</option>
@@ -89,7 +89,11 @@
       .then(data => {
         res.innerHTML = "";
         if(data.resultados) {
-          const filtrados = data.resultados.filter(m => m.nombre.toUpperCase().startsWith(q.toUpperCase()));
+          // Filtro: solo medicamentos que empiezan por lo escrito
+          const filtrados = data.resultados.filter(m => 
+            m.nombre.toUpperCase().startsWith(q.toUpperCase())
+          );
+          
           filtrados.slice(0, 5).forEach(m => {
             const div = document.createElement("div");
             div.className = "item";
@@ -131,8 +135,11 @@
   function finalizar(accion, conseguido) {
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
-    const farmaciaLimpia = parseInt(document.getElementById("farmacia").value.replace(/\D/g, ''), 10).toString();
+    
+    const rawFarmacia = document.getElementById("farmacia").value;
+    const farmaciaLimpia = parseInt(rawFarmacia.replace(/\D/g, ''), 10).toString();
     const cipaVal = document.getElementById("cipa").value.trim();
+    
     const datos = {
       id: "PAC-" + hashString(cipaVal + "SALT-PAC"),
       farmacia: "FAR-" + hashString(farmaciaLimpia + "SALT-FAR"),
@@ -141,7 +148,12 @@
       accion: accion,
       consiguió: conseguido
     };
-    fetch(urlGoogle + "?v=" + Date.now(), { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) }).then(() => {
+
+    fetch(urlGoogle + "?v=" + Date.now(), {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    }).then(() => {
       alert("¡Enviado correctamente!");
       location.reload();
     });
