@@ -68,14 +68,15 @@
   const urlGoogle = "https://script.google.com/macros/s/AKfycbwyHBf6QQwZ-0gaXdx838jhTLCyG78FwsBke-sWtqPgChnpocHpcnz7sU_6TJmjHLWp/exec";
   let medicamentoSeleccionado = false;
 
-  // Función para anonimizar el dato (Hash simple)
-  function hashData(str) {
+  // Genera un ID consistente basado en el CIPA y la Farmacia
+  function generarID(cipa, farmacia) {
+      const input = cipa + "-" + farmacia;
       let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-          hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      for (let i = 0; i < input.length; i++) {
+          hash = ((hash << 5) - hash) + input.charCodeAt(i);
           hash |= 0;
       }
-      return "F-" + Math.abs(hash).toString(16);
+      return "ID-" + Math.abs(hash).toString(36).toUpperCase();
   }
 
   function buscar() {
@@ -130,14 +131,14 @@
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
     
-    // Aquí anonimizamos el número de farmacia antes de enviarlo
-    const farmaciaOriginal = document.getElementById("farmacia").value;
+    const cipaVal = document.getElementById("cipa").value;
+    const farmaciaVal = document.getElementById("farmacia").value;
     
     const datos = {
-      id: "ID-" + Date.now(),
-      farmacia: hashData(farmaciaOriginal), // Se envía anonimizado
+      id: generarID(cipaVal, farmaciaVal),
+      farmacia: generarID(farmaciaVal, "SALT-FARMACIA"),
       medicamento: document.getElementById("medicamento").value,
-      cipa: "ANONIMIZADO", // El CIPA ya no se envía, se reemplaza por esta etiqueta
+      cipa: "ANONIMIZADO",
       accion: accion,
       consiguió: conseguido
     };
