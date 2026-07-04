@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estudio Desabastecimiento</title>
   <style>
+    /* Estilos minimalistas */
     body { font-family: 'Segoe UI', sans-serif; background-color: #357337; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     h1 { color: white; text-align: center; font-size: 1.4rem; margin-bottom: 10px; max-width: 600px; }
     p { color: #f0f0f0; text-align: center; font-size: 0.95rem; max-width: 500px; margin-bottom: 15px; }
@@ -68,15 +69,14 @@
   const urlGoogle = "https://script.google.com/macros/s/AKfycbwyHBf6QQwZ-0gaXdx838jhTLCyG78FwsBke-sWtqPgChnpocHpcnz7sU_6TJmjHLWp/exec";
   let medicamentoSeleccionado = false;
 
-  // Genera un ID consistente basado en el CIPA y la Farmacia
-  function generarID(cipa, farmacia) {
-      const input = cipa + "-" + farmacia;
-      let hash = 0;
-      for (let i = 0; i < input.length; i++) {
-          hash = ((hash << 5) - hash) + input.charCodeAt(i);
-          hash |= 0;
+  // Función hash robusta y consistente
+  function hashString(str) {
+      let hash = 0x811c9dc5;
+      for (let i = 0; i < str.length; i++) {
+          hash ^= str.charCodeAt(i);
+          hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
       }
-      return "ID-" + Math.abs(hash).toString(36).toUpperCase();
+      return ("00000000" + (hash >>> 0).toString(16)).slice(-8).toUpperCase();
   }
 
   function buscar() {
@@ -131,12 +131,13 @@
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
     
-    const cipaVal = document.getElementById("cipa").value;
-    const farmaciaVal = document.getElementById("farmacia").value;
+    // Anonimización fuerte: el ID se genera a partir de los datos, eliminando patrones
+    const cipaVal = document.getElementById("cipa").value.trim();
+    const farmaciaVal = document.getElementById("farmacia").value.trim();
     
     const datos = {
-      id: generarID(cipaVal, farmaciaVal),
-      farmacia: generarID(farmaciaVal, "SALT-FARMACIA"),
+      id: "PAC-" + hashString(cipaVal + "SALT1"),
+      farmacia: "FAR-" + hashString(farmaciaVal + "SALT2"),
       medicamento: document.getElementById("medicamento").value,
       cipa: "ANONIMIZADO",
       accion: accion,
