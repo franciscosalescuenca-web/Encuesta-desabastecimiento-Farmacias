@@ -15,7 +15,7 @@
     button:disabled { background: #a5a5a5; cursor: not-allowed; }
     input, select, textarea { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
     .campo-busqueda { position: relative; }
-    #resultados { border: 1px solid #ddd; border-top: none; max-height: 250px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
+    #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
     .item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
     .item:hover { background-color: #f1f8e9; }
   </style>
@@ -23,7 +23,7 @@
 <body>
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
-<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia.</p>
+<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento.</p>
 <p style="font-size: 0.8rem; opacity: 0.9;">*Datos anonimizados para uso estrictamente estadístico.</p>
 
 <div class="card">
@@ -47,7 +47,7 @@
   <div class="step" id="s3">
     <h3>¿Qué acción realizó?</h3>
     <select id="accion" onchange="checkAccion()">
-        <option value="Utilicé herramientas especializadas (Farmahelp, Luda, etc.)">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
+        <option value="Utilicé herramientas especializadas">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
         <option value="Contacté por otros medios con otra farmacia">Contacté por otros medios con otra farmacia</option>
         <option value="Indiqué al paciente que buscara en otras farmacias">Indiqué al paciente que buscara en otras farmacias</option>
         <option value="Derivé al médico">Derivé al médico</option>
@@ -90,28 +90,23 @@
         res.innerHTML = "";
         if(data.resultados) {
           const filtrados = data.resultados.filter(m => m.nombre.toUpperCase().startsWith(q.toUpperCase()));
-          
           filtrados.slice(0, 5).forEach(m => {
-            if(m.envases && m.envases.length > 0) {
-                m.envases.forEach(envase => {
-                    const div = document.createElement("div");
-                    div.className = "item";
-                    div.textContent = m.nombre + " - " + envase.presentacion;
-                    div.onclick = () => { 
-                        inputElement.value = div.textContent; 
-                        res.innerHTML = ""; 
-                        medicamentoSeleccionado = true;
-                    };
-                    res.appendChild(div);
-                });
-            }
+            const div = document.createElement("div");
+            div.className = "item";
+            div.textContent = m.nombre;
+            div.onclick = () => { 
+                inputElement.value = m.nombre; 
+                res.innerHTML = ""; 
+                medicamentoSeleccionado = true;
+            };
+            res.appendChild(div);
           });
         }
       });
   }
 
   function irSiguiente() {
-    if (!medicamentoSeleccionado) { alert("Por favor, seleccione una presentación del desplegable."); return; }
+    if (!medicamentoSeleccionado) { alert("Por favor, seleccione un medicamento del desplegable."); return; }
     document.getElementById('s1').classList.remove('active');
     document.getElementById('s2').classList.add('active');
   }
@@ -136,11 +131,8 @@
   function finalizar(accion, conseguido) {
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
-    
-    const rawFarmacia = document.getElementById("farmacia").value;
-    const farmaciaLimpia = parseInt(rawFarmacia.replace(/\D/g, ''), 10).toString();
+    const farmaciaLimpia = parseInt(document.getElementById("farmacia").value.replace(/\D/g, ''), 10).toString();
     const cipaVal = document.getElementById("cipa").value.trim();
-    
     const datos = {
       id: "PAC-" + hashString(cipaVal + "SALT-PAC"),
       farmacia: "FAR-" + hashString(farmaciaLimpia + "SALT-FAR"),
@@ -149,12 +141,7 @@
       accion: accion,
       consiguió: conseguido
     };
-
-    fetch(urlGoogle + "?v=" + Date.now(), {
-      method: "POST", mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos)
-    }).then(() => {
+    fetch(urlGoogle + "?v=" + Date.now(), { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) }).then(() => {
       alert("¡Enviado correctamente!");
       location.reload();
     });
