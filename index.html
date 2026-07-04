@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estudio Desabastecimiento</title>
   <style>
-    /* Estilos minimalistas */
     body { font-family: 'Segoe UI', sans-serif; background-color: #357337; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     h1 { color: white; text-align: center; font-size: 1.4rem; margin-bottom: 10px; max-width: 600px; }
     p { color: #f0f0f0; text-align: center; font-size: 0.95rem; max-width: 500px; margin-bottom: 15px; }
@@ -69,7 +68,6 @@
   const urlGoogle = "https://script.google.com/macros/s/AKfycbwyHBf6QQwZ-0gaXdx838jhTLCyG78FwsBke-sWtqPgChnpocHpcnz7sU_6TJmjHLWp/exec";
   let medicamentoSeleccionado = false;
 
-  // Función hash robusta y consistente
   function hashString(str) {
       let hash = 0x811c9dc5;
       for (let i = 0; i < str.length; i++) {
@@ -131,20 +129,19 @@
     const botones = document.querySelectorAll('button');
     botones.forEach(b => b.disabled = true);
     
-    // Anonimización fuerte: el ID se genera a partir de los datos, eliminando patrones
     const cipaVal = document.getElementById("cipa").value.trim();
     const farmaciaVal = document.getElementById("farmacia").value.trim();
     
     const datos = {
-      id: "PAC-" + hashString(cipaVal + "SALT1"),
-      farmacia: "FAR-" + hashString(farmaciaVal + "SALT2"),
+      id: "PAC-" + hashString(cipaVal + "SALT-PAC"),
+      farmacia: "FAR-" + hashString(farmaciaVal + "SALT-FAR"),
       medicamento: document.getElementById("medicamento").value,
       cipa: "ANONIMIZADO",
       accion: accion,
       consiguió: conseguido
     };
 
-    fetch(urlGoogle, {
+    fetch(urlGoogle + "?v=" + Date.now(), {
       method: "POST", mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
