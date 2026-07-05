@@ -24,7 +24,7 @@
 
 <h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
 <p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia en la Región de Murcia.</p>
-<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPA, el código de Oficina de Farmacia y cualquier identificador personal se anonimizan antes de ser procesados.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen una finalidad exclusivamente estadística. El CIPSNS, el código de Oficina de Farmacia y cualquier otro identificador personal serán tratados de forma anonimizada para garantizar la privacidad y protección de los datos de carácter personal, conforme a la normativa vigente.</p>
 
 <div class="card">
   <div class="step active" id="s1">
@@ -34,7 +34,7 @@
         <input type="text" id="medicamento" placeholder="Escriba y seleccione medicamento..." oninput="buscar()">
         <div id="resultados"></div>
     </div>
-    <input type="text" id="cipa" placeholder="Escanear CIPA del Paciente" inputmode="numeric" autofocus onkeypress="if(event.keyCode==13) irSiguiente()">
+    <input type="text" id="cipsns" placeholder="Indique el CIPSNS (Ej: BBBBBBBBXXXXXXXX)" maxlength="16" onkeypress="if(event.keyCode==13) irSiguiente()">
     <button id="btn-s1" onclick="irSiguiente()">Siguiente</button>
   </div>
 
@@ -89,20 +89,12 @@
       .then(data => {
         res.innerHTML = "";
         if(data.resultados) {
-          // Filtro: solo medicamentos que empiezan por lo escrito
-          const filtrados = data.resultados.filter(m => 
-            m.nombre.toUpperCase().startsWith(q.toUpperCase())
-          );
-          
+          const filtrados = data.resultados.filter(m => m.nombre.toUpperCase().startsWith(q.toUpperCase()));
           filtrados.slice(0, 5).forEach(m => {
             const div = document.createElement("div");
             div.className = "item";
             div.textContent = m.nombre;
-            div.onclick = () => { 
-                inputElement.value = m.nombre; 
-                res.innerHTML = ""; 
-                medicamentoSeleccionado = true;
-            };
+            div.onclick = () => { inputElement.value = m.nombre; res.innerHTML = ""; medicamentoSeleccionado = true; };
             res.appendChild(div);
           });
         }
@@ -111,6 +103,15 @@
 
   function irSiguiente() {
     if (!medicamentoSeleccionado) { alert("Por favor, seleccione un medicamento del desplegable."); return; }
+    
+    const cipsnsVal = document.getElementById("cipsns").value.trim();
+    const regex = /^BBBBBBBB[A-Za-z0-9]{8}$/;
+    
+    if (!regex.test(cipsnsVal)) {
+        alert("El CIPSNS debe tener 16 caracteres y comenzar con 8 letras 'B'.");
+        return;
+    }
+
     document.getElementById('s1').classList.remove('active');
     document.getElementById('s2').classList.add('active');
   }
@@ -138,13 +139,13 @@
     
     const rawFarmacia = document.getElementById("farmacia").value;
     const farmaciaLimpia = parseInt(rawFarmacia.replace(/\D/g, ''), 10).toString();
-    const cipaVal = document.getElementById("cipa").value.trim();
+    const cipsnsVal = document.getElementById("cipsns").value.trim();
     
     const datos = {
-      id: "PAC-" + hashString(cipaVal + "SALT-PAC"),
+      id: "PAC-" + hashString(cipsnsVal + "SALT-PAC"),
       farmacia: "FAR-" + hashString(farmaciaLimpia + "SALT-FAR"),
       medicamento: document.getElementById("medicamento").value,
-      cipa: "ANONIMIZADO",
+      cipsns: "ANONIMIZADO",
       accion: accion,
       consiguió: conseguido
     };
