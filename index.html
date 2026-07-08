@@ -7,27 +7,35 @@
   <style>
     body { font-family: 'Segoe UI', sans-serif; background-color: #357337; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     h1 { color: white; text-align: center; font-size: 1.4rem; margin-bottom: 10px; max-width: 600px; }
+    p { color: #f0f0f0; text-align: center; font-size: 0.95rem; max-width: 500px; margin-bottom: 15px; }
     .card { background: #F9F9F9; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 500px; text-align: center; }
     .step { display: none; }
     .step.active { display: block; }
-    button { background: #357337; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; }
+    button { background: #357337; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 15px; font-size: 16px; font-weight: bold; }
+    button:disabled { background: #a5a5a5; cursor: not-allowed; }
     input, select, textarea { display: block; width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-    #resultados { border: 1px solid #ddd; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: calc(100% - 60px); z-index: 999; }
-    .item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; }
+    .campo-busqueda { position: relative; }
+    #resultados { border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 999; border-radius: 0 0 10px 10px; text-align: left; }
+    .item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
     .item:hover { background-color: #f1f8e9; }
   </style>
 </head>
 <body>
 
-<h1>Encuesta de Desabastecimiento</h1>
+<h1>Encuesta para Oficinas de Farmacia sobre el desabastecimiento de medicamentos en la Región de Murcia</h1>
+<p>Tu colaboración es fundamental para obtener datos reales sobre el impacto del desabastecimiento en los pacientes y en las Oficinas de Farmacia en la Región de Murcia.</p>
+<p style="font-size: 0.8rem; opacity: 0.9;">*Los datos recogidos tienen un fin exclusivamente estadístico. El CIPSNS, el código de Oficina de Farmacia y cualquier identificador personal se anonimizan antes de ser procesados.</p>
 
 <div class="card">
   <div class="step active" id="s1">
-    <input type="text" id="farmacia" placeholder="Nº Farmacia">
-    <input type="text" id="medicamento" placeholder="Buscar medicamento..." oninput="buscar()">
-    <div id="resultados"></div>
-    <input type="text" id="cipsns" placeholder="CIPSNS (8 B + 8 caracteres)" maxlength="16">
-    <button onclick="irSiguiente()">Siguiente</button>
+    <h3>Datos del registro</h3>
+    <input type="text" id="farmacia" placeholder="Nº Farmacia (Ej: 10, MU-10, 0010)" inputmode="numeric">
+    <div class="campo-busqueda">
+        <input type="text" id="medicamento" placeholder="Escriba y seleccione medicamento..." oninput="buscar()">
+        <div id="resultados"></div>
+    </div>
+    <input type="text" id="cipsns" placeholder="CIPSNS (Ej. BBBBBBBBXX123456)" maxlength="16" onkeypress="if(event.keyCode==13) irSiguiente()">
+    <button id="btn-s1" onclick="irSiguiente()">Siguiente</button>
   </div>
 
   <div class="step" id="s2">
@@ -37,23 +45,26 @@
   </div>
 
   <div class="step" id="s3">
-    <select id="accion">
-        <option value="Utilicé herramientas especializadas">Utilicé herramientas especializadas</option>
-        <option value="Contacté por otros medios">Contacté por otros medios</option>
+    <h3>¿Qué acción realizó?</h3>
+    <select id="accion" onchange="checkAccion()">
+        <option value="Utilicé herramientas especializadas (Farmahelp, Luda, etc.)">Utilicé herramientas especializadas (Farmahelp, Luda, etc.)</option>
+        <option value="Contacté por otros medios con otra farmacia">Contacté por otros medios con otra farmacia</option>
         <option value="Indiqué al paciente que buscara en otras farmacias">Indiqué al paciente que buscara en otras farmacias</option>
         <option value="Derivé al médico">Derivé al médico</option>
         <option value="Otras">Otras</option>
     </select>
+    <textarea id="otras-info" placeholder="Especifique la acción realizada..." style="display:none;"></textarea>
     <div id="div-conseguido">
-        <button onclick="finalizar(document.getElementById('accion').value, 'Sí')">Conseguido: Sí</button>
-        <button onclick="finalizar(document.getElementById('accion').value, 'No')">Conseguido: No</button>
+        <h3>¿Consiguió el paciente el medicamento?</h3>
+        <button onclick="finalizar(obtenerAccion(), 'Sí')">Sí</button>
+        <button onclick="finalizar(obtenerAccion(), 'No')">No</button>
+        <button onclick="finalizar(obtenerAccion(), 'No lo sé')">No lo sé</button>
     </div>
-    <button onclick="finalizar('Derivé al médico', 'N/A')">Finalizar Derivación</button>
+    <button id="btn-finalizar" style="display:none;" onclick="finalizar('Derivé al médico', 'N/A')">Finalizar</button>
   </div>
 </div>
 
 <script>
-  // URL de tu nuevo script implementado
   const urlGoogle = "https://script.google.com/macros/s/AKfycbwQ9PcMwyrbgx_e_BBxtFS7TtOmoq4IqBWLdVWH6IP632CEWt63_GoqpTHXqLUrKjY2ww/exec";
   let medicamentoSeleccionado = false;
 
@@ -67,25 +78,42 @@
   }
 
   function buscar() {
-    const q = document.getElementById('medicamento').value;
+    const inputElement = document.getElementById('medicamento');
+    const q = inputElement.value;
     const res = document.getElementById('resultados');
+    medicamentoSeleccionado = false; 
     if (q.length < 3) { res.innerHTML = ""; return; }
+    
     fetch('https://cima.aemps.es/cima/rest/medicamentos?nombre=' + encodeURIComponent(q))
       .then(r => r.json())
       .then(data => {
         res.innerHTML = "";
-        data.resultados?.slice(0, 5).forEach(m => {
-          const div = document.createElement("div");
-          div.className = "item";
-          div.textContent = m.nombre;
-          div.onclick = () => { document.getElementById('medicamento').value = m.nombre; res.innerHTML = ""; medicamentoSeleccionado = true; };
-          res.appendChild(div);
-        });
+        if(data.resultados) {
+          const filtrados = data.resultados.filter(m => m.nombre.toUpperCase().startsWith(q.toUpperCase()));
+          filtrados.slice(0, 5).forEach(m => {
+            const div = document.createElement("div");
+            div.className = "item";
+            div.textContent = m.nombre;
+            div.onclick = () => { 
+                inputElement.value = m.nombre; 
+                res.innerHTML = ""; 
+                medicamentoSeleccionado = true;
+            };
+            res.appendChild(div);
+          });
+        }
       });
   }
 
   function irSiguiente() {
-    if (!medicamentoSeleccionado) { alert("Seleccione un medicamento"); return; }
+    if (!medicamentoSeleccionado) { alert("Por favor, seleccione un medicamento del desplegable."); return; }
+    // Validación CIPSNS: 8 letras 'B' seguidas de 8 caracteres alfanuméricos
+    const cipsnsVal = document.getElementById("cipsns").value.trim();
+    const regex = /^[Bb]{8}[A-Za-z0-9]{8}$/;
+    if (!regex.test(cipsnsVal)) {
+        alert("El CIPSNS debe comenzar con 8 letras 'B' seguidas de 8 caracteres.");
+        return;
+    }
     document.getElementById('s1').classList.remove('active');
     document.getElementById('s2').classList.add('active');
   }
@@ -95,20 +123,43 @@
     document.getElementById('s3').classList.add('active');
   }
 
+  function checkAccion() {
+    const accion = document.getElementById('accion').value;
+    document.getElementById('otras-info').style.display = (accion === 'Otras') ? 'block' : 'none';
+    document.getElementById('div-conseguido').style.display = (accion === 'Derivé al médico') ? 'none' : 'block';
+    document.getElementById('btn-finalizar').style.display = (accion === 'Derivé al médico') ? 'block' : 'none';
+  }
+
+  function obtenerAccion() {
+    const val = document.getElementById('accion').value;
+    return val === 'Otras' ? 'Otras: ' + document.getElementById('otras-info').value : val;
+  }
+
   function finalizar(accion, conseguido) {
+    const botones = document.querySelectorAll('button');
+    botones.forEach(b => b.disabled = true);
+    
+    const rawFarmacia = document.getElementById("farmacia").value;
+    const farmaciaLimpia = parseInt(rawFarmacia.replace(/\D/g, ''), 10).toString();
+    const cipsnsVal = document.getElementById("cipsns").value.trim();
+    
     const datos = {
-      id: "PAC-" + hashString(document.getElementById("cipsns").value + "SALT-PAC"),
-      farmacia: "FAR-" + hashString(document.getElementById("farmacia").value + "SALT-FAR"),
+      id: "PAC-" + hashString(cipsnsVal + "SALT-PAC"),
+      farmacia: "FAR-" + hashString(farmaciaLimpia + "SALT-FAR"),
       medicamento: document.getElementById("medicamento").value,
+      cipsns: "ANONIMIZADO",
       accion: accion,
       consiguió: conseguido
     };
 
-    fetch(urlGoogle, {
+    fetch(urlGoogle + "?v=" + Date.now(), {
       method: "POST", mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
-    }).then(() => { alert("¡Envío realizado correctamente!"); location.reload(); });
+    }).then(() => {
+      alert("¡Enviado correctamente!");
+      location.reload();
+    });
   }
 </script>
 </body>
